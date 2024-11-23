@@ -7,18 +7,20 @@ const {
 
 const router = express.Router();
 
-const upload = multer({ dest: "uploads/" });
+// Sử dụng Memory Storage
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
-    const result = await uploadMediaToCloudinary(req.file.path);
+    // Gọi hàm upload với buffer
+    const result = await uploadMediaToCloudinary(req.file);
     res.status(200).json({
       success: true,
       data: result,
     });
   } catch (e) {
     console.log(e);
-
     res.status(500).json({ success: false, message: "Error uploading file" });
   }
 });
@@ -30,7 +32,7 @@ router.delete("/delete/:id", async (req, res) => {
     if (!id) {
       return res.status(400).json({
         success: false,
-        message: "Assest Id is required",
+        message: "Asset Id is required",
       });
     }
 
@@ -38,11 +40,10 @@ router.delete("/delete/:id", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Assest deleted successfully from cloudinary",
+      message: "Asset deleted successfully from Cloudinary",
     });
   } catch (e) {
     console.log(e);
-
     res.status(500).json({ success: false, message: "Error deleting file" });
   }
 });
@@ -50,7 +51,7 @@ router.delete("/delete/:id", async (req, res) => {
 router.post("/bulk-upload", upload.array("files", 10), async (req, res) => {
   try {
     const uploadPromises = req.files.map((fileItem) =>
-      uploadMediaToCloudinary(fileItem.path)
+      uploadMediaToCloudinary(fileItem)
     );
 
     const results = await Promise.all(uploadPromises);
@@ -61,7 +62,6 @@ router.post("/bulk-upload", upload.array("files", 10), async (req, res) => {
     });
   } catch (event) {
     console.log(event);
-
     res
       .status(500)
       .json({ success: false, message: "Error in bulk uploading files" });
@@ -69,3 +69,4 @@ router.post("/bulk-upload", upload.array("files", 10), async (req, res) => {
 });
 
 module.exports = router;
+
